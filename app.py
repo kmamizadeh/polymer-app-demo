@@ -1,339 +1,284 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import os
 import joblib
-import numpy as np
 
-# مسیر فایل‌های پروژه
-EXCEL_FILE = 'D:/work/personal branding/AI Projects/compound characteristic prodiction with AI/dataset/Polymer_Properties_Processed_by_python1.xlsx'
-IMPACT_MODEL_FILE = 'D:/work/personal branding/AI Projects/compound characteristic prodiction with AI/regression_model.pkl'
-TENSILE_MODEL_FILE = 'D:/work/personal branding/AI Projects/compound characteristic prodiction with AI/tensile_model.pkl'
+# Paths to the files. These should be relative to the script location.
+EXCEL_FILE = 'Polymer_Properties_Processed_by_python1.xlsx'
+IMPACT_MODEL_FILE = 'regression_model.pkl'
+TENSILE_MODEL_FILE = 'tensile_model.pkl'
 
-# --- تعریف واحدهای استاندارد و ضرایب تبدیل ---
-# واحد پایه برای Impact: J/m
-CHARPY_UNITS = {
-    "J/m^2": 1.0,
-    "kJ/m^2": 1000.0,
+# Define standard units for the properties
+UNITS_IMPACT = {
+    "KJ/m": "kJ/m",
+    "J/m": "J/m",
+    "J/m^2": "J/m^2",
+    "KJ/m^2": "KJ/m^2",
+    "J/cm^2": "J/cm^2"
+}
+UNITS_TENSILE = {
+    "Mpa": "MPa",
+    "Gpa": "GPa",
+    "Pa": "Pa"
 }
 
-IZOD_UNITS = {
-    "J/m": 1.0,
-    "ft-lb/in": 53.3787
-}
-
-# واحد پایه برای Tensile Strength: MPa
-TENSILE_UNITS = {
-    "MPa": 1.0,
-    "psi": 0.00689476,
-    "GPa": 1000.0
-}
-
-
-# --- توابع تبدیل واحد ---
-def convert_impact_to_base(value, unit, test_type):
-    """مقدار ضربه را به واحد پایه (J/m) تبدیل می‌کند."""
-    if test_type == "Charpy":
-        if unit in CHARPY_UNITS:
-            return value * CHARPY_UNITS[unit]
-    elif test_type == "Izod":
-        if unit in IZOD_UNITS:
-            return value * IZOD_UNITS[unit]
-    return value
-
-
-def convert_tensile_to_base(value, unit):
-    """مقدار استحکام کششی را به واحد پایه (MPa) تبدیل می‌کند."""
-    if unit in TENSILE_UNITS:
-        return value * TENSILE_UNITS[unit]
-    return value
-
-
-# --- بارگذاری دیتاست و استخراج مقادیر یکتا ---
+# --- Data and Model Loading (with caching) ---
 @st.cache_data
 def load_data_and_get_unique_values():
-    """دیتاست را بارگذاری و مقادیر یکتا را برای استفاده در منوها استخراج می‌کند."""
     if not os.path.exists(EXCEL_FILE):
-        st.error(f"فایل اکسل دیتاست با مسیر {EXCEL_FILE} پیدا نشد.")
-        return {}, pd.DataFrame(), False
+        return None, None
+    
+    df = pd.read_excel(EXCEL_FILE)
+    
+    unique_values = {
+        'Polymer1_Type': sorted(df['Polymer1_Type'].unique()),
+        'Polymer2_Type': sorted(df['Polymer2_Type'].unique()),
+        'Polymer3_Type': sorted(df['Polymer3_Type'].unique()),
+        'Filler1_Type': sorted(df['Filler1_Type'].unique()),
+        'Filler2_Type': sorted(df['Filler2_Type'].unique()),
+        'Additive_Type': sorted(df['Additive_Type'].unique())
+    }
+    
+    return df, unique_values
 
-    try:
-        df = pd.read_excel(EXCEL_FILE)
-
-        # استخراج مقادیر یکتا از ستون‌های مربوطه
-        all_polymers = pd.concat(
-            [df['Polymer1_Type'], df['Polymer2_Type'], df['Polymer3_Type']]).dropna().unique().tolist()
-        all_additives = df['Additive_Type'].dropna().unique().tolist()
-        all_fillers = pd.concat([df['Filler1_Type'], df['Filler2_Type']]).dropna().unique().tolist()
-
-        # Adding 'None' option to the beginning of the lists
-        unique_values = {
-            'All_Polymers': ['None'] + sorted(all_polymers),
-            'All_Additives': ['None'] + sorted(all_additives),
-            'All_Fillers': ['None'] + sorted(all_fillers),
-            'Impact_Test_Type': ['نامشخص', 'Charpy', 'Izod']
-        }
-
-        return unique_values, df, True
-    except Exception as e:
-        st.error(f"خطا در خواندن فایل اکسل: {e}")
-        return {}, pd.DataFrame(), False
-
-
-# --- بارگذاری مدل و لیست ستون‌های ویژگی ---
 @st.cache_resource
 def load_model_and_get_columns():
-    """مدل آموزش‌دیده را بارگذاری می‌کند."""
     try:
+        if not os.path.exists(IMPACT_MODEL_FILE) or not os.path.exists(TENSILE_MODEL_FILE):
+            st.error("فایل های مدل (.pkl) پیدا نشدند. لطفا مطمئن شوید که در مسیر صحیح قرار دارند.")
+            return None, None, None, None
+            
         impact_model = joblib.load(IMPACT_MODEL_FILE)
-        # Assuming the model has a feature_names_in_ attribute
-        training_columns_impact = impact_model.feature_names_in_
+        tensile_model = joblib.load(TENSILE_MODEL_FILE)
+        
+        impact_model_columns = impact_model.feature_names_in_.tolist()
+        tensile_model_columns = tensile_model.feature_names_in_.tolist()
+
+        return impact_model, tensile_model, impact_model_columns, tensile_model_columns
+        
     except FileNotFoundError:
-        st.error(f"فایل مدل (regression_model.pkl) با مسیر {IMPACT_MODEL_FILE} پیدا نشد.")
+        st.error("خطا: فایل‌های مدل پیدا نشدند.")
+        return None, None, None, None
+    except Exception as e:
+        st.error(f"خطا در بارگذاری مدل: {e}")
         return None, None, None, None
 
+# --- Main Functions ---
+def convert_impact_to_base(value, unit):
+    if unit == "J/m":
+        return value
+    elif unit == "KJ/m":
+        return value * 1000
+    elif unit in ["J/m^2", "KJ/m^2", "J/cm^2"]:
+        # The model is trained on J/m, so we cannot convert the units directly without geometry data.
+        # We will use the input value as is.
+        st.warning("توجه: این تبدیل تقریبی است، زیرا اطلاعات ابعاد نمونه در دسترس نیست.")
+        return value
+    return value
+
+def convert_tensile_to_base(value, unit):
+    if unit == "MPa":
+        return value
+    elif unit == "GPa":
+        return value * 1000
+    elif unit == "Pa":
+        return value / 1000000
+    return value
+
+# --- Prediction Logic ---
+def predict_properties(data_to_predict, impact_model, tensile_model, impact_cols, tensile_cols):
     try:
-        tensile_model = joblib.load(TENSILE_MODEL_FILE)
-        training_columns_tensile = tensile_model.feature_names_in_
-    except FileNotFoundError:
-        st.warning(
-            f"فایل مدل برای پیش‌بینی استحکام کششی ({TENSILE_MODEL_FILE}) پیدا نشد. تنها پیش‌بینی خواص ضربه فعال است.")
-        tensile_model = None
-        training_columns_tensile = None
+        # Create a dataframe for impact prediction with all required columns
+        df_impact = pd.DataFrame(columns=impact_cols)
+        df_impact.loc[0] = 0
 
-    return impact_model, tensile_model, training_columns_impact, training_columns_tensile
+        # Create a dataframe for tensile prediction with all required columns
+        df_tensile = pd.DataFrame(columns=tensile_cols)
+        df_tensile.loc[0] = 0
+        
+        # Populate the dataframes from the input dictionary
+        for key, value in data_to_predict.items():
+            if value is None:
+                continue
 
+            if key in df_impact.columns:
+                df_impact.loc[0, key] = value
+            
+            if key in df_tensile.columns:
+                df_tensile.loc[0, key] = value
+                
+            if isinstance(value, str):
+                # One-hot encode the categorical variables
+                if f'{key}_{value}' in df_impact.columns:
+                    df_impact.loc[0, f'{key}_{value}'] = 1
+                if f'{key}_{value}' in df_tensile.columns:
+                    df_tensile.loc[0, f'{key}_{value}'] = 1
 
-# تابع برای پیش‌بینی
-def predict_properties(impact_model, tensile_model, data_dict, training_columns_impact, training_columns_tensile):
+        # Drop the original categorical columns from the dataframes before prediction
+        categorical_cols = ['Polymer1_Type', 'Polymer2_Type', 'Polymer3_Type', 
+                            'Filler1_Type', 'Filler2_Type', 'Additive_Type', 
+                            'Impact_Test_Type']
+
+        for col in categorical_cols:
+            if col in df_impact.columns:
+                df_impact = df_impact.drop(columns=[col])
+            if col in df_tensile.columns:
+                df_tensile = df_tensile.drop(columns=[col])
+        
+        # Make predictions
+        impact_pred = impact_model.predict(df_impact)[0]
+        tensile_pred = tensile_model.predict(df_tensile)[0]
+        
+        return {'impact': impact_pred, 'tensile': tensile_pred}
+    except Exception as e:
+        st.error(f"خطا در پیش‌بینی: {e}")
+        return None
+
+# --- Main App Structure ---
+st.set_page_config(layout="wide", page_title="Polymer Property Predictor")
+st.title("برنامه پیش‌بینی و ثبت خواص کامپوزیت‌های پلیمری")
+st.markdown(
     """
-    داده‌های ورودی را پردازش، همگام‌سازی و سپس پیش‌بینی را انجام می‌دهد.
-    این تابع یک دیتافریم با فرمت صحیح برای مدل ایجاد می‌کند.
-    """
-    predictions = {}
+    این برنامه به شما امکان می‌دهد خواص فرمولاسیون‌های پلیمری را ثبت کنید
+    و بر اساس مدل‌های هوش مصنوعی، خواص نهایی آن‌ها را پیش‌بینی نمایید.
+    """, unsafe_allow_html=True)
 
-    if impact_model:
-        df_impact_predict = pd.DataFrame(np.zeros((1, len(training_columns_impact))), columns=training_columns_impact)
-        for key, value in data_dict.items():
-            if value is not None:
-                # Handle one-hot encoded features for impact model
-                if key in ['Polymer1_Type', 'Polymer2_Type', 'Polymer3_Type', 'Filler1_Type', 'Filler2_Type',
-                           'Additive_Type', 'Impact_Test_Type']:
-                    if value != 'None' and value != 'نامشخص':
-                        col_name = f"{key}_{value}"
-                        if col_name in df_impact_predict.columns:
-                            df_impact_predict[col_name] = 1
-                # Handle numeric features for impact model
-                elif key in df_impact_predict.columns:
-                    df_impact_predict[key] = value
+df, unique_values = load_data_and_get_unique_values()
+impact_model, tensile_model, impact_cols, tensile_cols = load_model_and_get_columns()
 
-        impact_prediction = impact_model.predict(df_impact_predict)
-        predictions['impact'] = impact_prediction[0]
+col_form, col_predict = st.columns([1.5, 1])
 
-    if tensile_model:
-        df_tensile_predict = pd.DataFrame(np.zeros((1, len(training_columns_tensile))),
-                                          columns=training_columns_tensile)
-        for key, value in data_dict.items():
-            if value is not None:
-                # Handle one-hot encoded features for tensile model
-                if key in ['Polymer1_Type', 'Polymer2_Type', 'Polymer3_Type', 'Filler1_Type', 'Filler2_Type',
-                           'Additive_Type']:
-                    if value != 'None' and value != 'نامشخص':
-                        col_name = f"{key}_{value}"
-                        if col_name in df_tensile_predict.columns:
-                            df_tensile_predict[col_name] = 1
-                # Handle numeric features for tensile model
-                elif key in df_tensile_predict.columns:
-                    df_tensile_predict[key] = value
+with col_form:
+    st.header("ثبت اطلاعات در دیتاست")
 
-        tensile_prediction = tensile_model.predict(df_tensile_predict)
-        predictions['tensile'] = tensile_prediction[0]
+    with st.form(key='data_entry_form'):
+        st.subheader("۱. مشخصات فرمولاسیون")
+        
+        st.markdown("---")
+        
+        st.markdown("**پلیمرها**")
+        p1_type = st.selectbox("نوع پلیمر اول", options=[''] + unique_values['Polymer1_Type'], key="p1_type")
+        p1_perc = st.number_input("درصد پلیمر اول", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p1_perc")
+        p2_type = st.selectbox("نوع پلیمر دوم", options=[''] + unique_values['Polymer2_Type'], key="p2_type")
+        p2_perc = st.number_input("درصد پلیمر دوم", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p2_perc")
+        p3_type = st.selectbox("نوع پلیمر سوم", options=[''] + unique_values['Polymer3_Type'], key="p3_type")
+        p3_perc = st.number_input("درصد پلیمر سوم", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p3_perc")
+        
+        st.markdown("---")
 
-    return predictions
+        st.markdown("**فیلرها**")
+        f1_type = st.selectbox("نوع فیلر اول", options=[''] + unique_values['Filler1_Type'], key="f1_type")
+        f1_size = st.number_input("اندازه ذرات فیلر اول (میکرون)", min_value=0.0, key="f1_size")
+        f1_perc = st.number_input("درصد فیلر اول", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f1_perc")
+        f2_type = st.selectbox("نوع فیلر دوم", options=[''] + unique_values['Filler2_Type'], key="f2_type")
+        f2_size = st.number_input("اندازه ذرات فیلر دوم (میکرون)", min_value=0.0, key="f2_size")
+        f2_perc = st.number_input("درصد فیلر دوم", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f2_perc")
 
+        st.markdown("---")
 
-# --- ساخت واسط کاربری (UI) با Streamlit ---
-unique_values, df_data, data_loaded = load_data_and_get_unique_values()
-impact_model, tensile_model, training_columns_impact, training_columns_tensile = load_model_and_get_columns()
+        st.markdown("**افزودنی‌ها**")
+        a_type = st.selectbox("نوع افزودنی", options=[''] + unique_values['Additive_Type'], key="a_type")
+        a_perc = st.number_input("درصد افزودنی", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="a_perc")
+        a_func = st.selectbox("عملکرد افزودنی", options=[''] + ['Toughener', 'Impact Modifier', 'Colorant', 'Antioxidant', 'Unknown'], key="a_func")
+        
+        st.markdown("---")
+        
+        st.subheader("۲. نوع آزمون")
+        impact_test_type = st.selectbox("نوع آزمون ضربه", options=[''] + ['Charpy', 'Izod'], key="impact_test_type_entry")
+        impact_not_break = st.checkbox("شکسته نشد (No break)", key="impact_not_break")
+        
+        st.markdown("---")
+        
+        st.subheader("۳. خواص نهایی")
+        impact_value = st.number_input(f"خواص ضربه (J/m)", min_value=0.0, key="impact_value")
+        tensile_value = st.number_input("استحکام کششی (MPa)", min_value=0.0, key="tensile_value")
+        
+        submit_button = st.form_submit_button(label='ثبت اطلاعات')
 
-if data_loaded and impact_model and training_columns_impact is not None:
-    st.set_page_config(layout="wide")
-    st.title("ثبت و پیش‌بینی خواص فرمولاسیون‌های پلیمری")
+        if submit_button:
+            if df is not None:
+                new_data = {
+                    "Polymer1_Type": p1_type, "Polymer1_Perc": p1_perc,
+                    "Polymer2_Type": p2_type, "Polymer2_Perc": p2_perc,
+                    "Polymer3_Type": p3_type, "Polymer3_Perc": p3_perc,
+                    "Filler1_Type": f1_type, "Filler1_ParticleSize_um": f1_size, "Filler1_Perc": f1_perc,
+                    "Filler2_Type": f2_type, "Filler2_ParticleSize_um": f2_size, "Filler2_Perc": f2_perc,
+                    "Additive_Type": a_type, "Additive_Perc": a_perc, "Additive_Functionality": a_func,
+                    "Impact_Test_Type": impact_test_type, "Impact_Not_Break": impact_not_break,
+                    "Impact_Value_Jm": convert_impact_to_base(impact_value, "J/m"), 
+                    "Tensile_Value_MPa": convert_tensile_to_base(tensile_value, "MPa")
+                }
+                
+                new_row = pd.DataFrame([new_data])
+                updated_df = pd.concat([df, new_row], ignore_index=True)
+                updated_df.to_excel(EXCEL_FILE, index=False)
+                st.success("اطلاعات با موفقیت ثبت شد!")
+            else:
+                st.error("خطا: فایل اکسل دیتاست پیدا نشد. لطفاً آن را آپلود کنید.")
 
-    st.image(
-        "https://www.freepik.com/premium-photo/polymer-pellets-plastic-resin-background-polypropylene-polyethylene-pvc-plastic-granules_15830230.htm",
-        use_container_width=True)
+with col_predict:
+    st.header("پیش‌بینی خواص")
 
-    col_form, col_predict = st.columns([1, 1])
-
-    # --- ستون سمت چپ: فرم ثبت اطلاعات ---
-    with col_form:
-        st.header("ثبت اطلاعات جدید")
-
-        # --- بخش اول: مشخصات فرمولاسیون ---
+    with st.form(key='prediction_form'):
         st.subheader("مشخصات فرمولاسیون")
 
-        with st.container():
-            p1_type = st.text_input("نوع پلیمر اول", key="p1t")
-            p1_perc = st.number_input("درصد پلیمر اول (%)", min_value=0.0, max_value=100.0, step=0.1, key="p1p")
-
-            p2_type = st.text_input("نوع پلیمر دوم", key="p2t")
-            p2_perc = st.number_input("درصد پلیمر دوم (%)", min_value=0.0, max_value=100.0, step=0.1, key="p2p")
-
-            p3_type = st.text_input("نوع پلیمر سوم", key="p3t")
-            p3_perc = st.number_input("درصد پلیمر سوم (%)", min_value=0.0, max_value=100.0, step=0.1, key="p3p")
-
-            st.subheader("فیلرها و افزودنی‌ها")
-            f1_type = st.text_input("نوع فیلر اول", key="f1t")
-            f1_perc = st.number_input("درصد فیلر اول (%)", min_value=0.0, max_value=100.0, step=0.1, key="f1p")
-            f1_size = st.number_input("اندازه ذرات فیلر اول (میکرون)", min_value=0.0, step=0.1, key="f1s")
-
-            f2_type = st.text_input("نوع فیلر دوم", key="f2t")
-            f2_perc = st.number_input("درصد فیلر دوم (%)", min_value=0.0, max_value=100.0, step=0.1, key="f2p")
-            f2_size = st.number_input("اندازه ذرات فیلر دوم (میکرون)", min_value=0.0, step=0.1, key="f2s")
-
-            a_type = st.text_input("نوع افزودنی", key="at")
-            a_perc = st.number_input("درصد افزودنی (%)", min_value=0.0, max_value=100.0, step=0.1, key="ap")
-            a_func = st.text_input("عملکرد افزودنی", key="af")
-
-        # --- بخش دوم: نوع آزمون ضربه (خارج از فرم برای به‌روزرسانی پویا) ---
         st.markdown("---")
-        st.subheader("نوع آزمون ضربه")
-        impact_test_type_reg = st.selectbox("نوع آزمون ضربه", options=unique_values['Impact_Test_Type'], key="itt_reg")
 
-        # منطق پویا برای به‌روزرسانی واحدهای ضربه
-        units_options = []
-        if impact_test_type_reg == 'Charpy':
-            units_options = list(CHARPY_UNITS.keys())
-        elif impact_test_type_reg == 'Izod':
-            units_options = list(IZOD_UNITS.keys())
-
-        # --- بخش سوم: خواص نهایی و دکمه ثبت ---
+        st.markdown("**پلیمرها**")
+        p1_type_p = st.selectbox("نوع پلیمر اول", options=[''] + unique_values['Polymer1_Type'], key="p1_type_p")
+        p1_perc_p = st.number_input("درصد پلیمر اول", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p1_perc_p")
+        p2_type_p = st.selectbox("نوع پلیمر دوم", options=[''] + unique_values['Polymer2_Type'], key="p2_type_p")
+        p2_perc_p = st.number_input("درصد پلیمر دوم", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p2_perc_p")
+        p3_type_p = st.selectbox("نوع پلیمر سوم", options=[''] + unique_values['Polymer3_Type'], key="p3_type_p")
+        p3_perc_p = st.number_input("درصد پلیمر سوم", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p3_perc_p")
+        
         st.markdown("---")
-        st.subheader("خواص نهایی")
 
-        with st.form("final_properties_form"):
-            col_impact_val, col_impact_unit = st.columns([0.7, 0.3])
-            with col_impact_val:
-                impact_strength = st.number_input("خواص ضربه", min_value=0.0, key="is")
-            with col_impact_unit:
-                impact_unit = st.selectbox("واحد", options=units_options, key="iu")
+        st.markdown("**فیلرها**")
+        f1_type_p = st.selectbox("نوع فیلر اول", options=[''] + unique_values['Filler1_Type'], key="f1_type_p")
+        f1_size_p = st.number_input("اندازه ذرات فیلر اول (میکرون)", min_value=0.0, key="f1_size_p")
+        f1_perc_p = st.number_input("درصد فیلر اول", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f1_perc_p")
+        f2_type_p = st.selectbox("نوع فیلر دوم", options=[''] + unique_values['Filler2_Type'], key="f2_type_p")
+        f2_size_p = st.number_input("اندازه ذرات فیلر دوم (میکرون)", min_value=0.0, key="f2_size_p")
+        f2_perc_p = st.number_input("درصد فیلر دوم", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f2_perc_p")
 
-            impact_not_break = st.checkbox("آزمون منجر به شکست نشد؟ (Not break)", key="inb")
+        st.markdown("---")
 
-            col_tensile_val, col_tensile_unit = st.columns([0.7, 0.3])
-            with col_tensile_val:
-                tensile_strength = st.number_input("خواص استحکام کششی", min_value=0.0, key="ts")
-            with col_tensile_unit:
-                tensile_unit = st.selectbox("واحد", list(TENSILE_UNITS.keys()), key="tu")
+        st.markdown("**افزودنی‌ها**")
+        a_type_p = st.selectbox("نوع افزودنی", options=[''] + unique_values['Additive_Type'], key="a_type_p")
+        a_perc_p = st.number_input("درصد افزودنی", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="a_perc_p")
+        a_func_p = st.selectbox("عملکرد افزودنی", options=[''] + ['Toughener', 'Impact Modifier', 'Colorant', 'Antioxidant', 'Unknown'], key="a_func_p")
+        
+        st.markdown("---")
 
-            st.markdown("---")
-            submitted = st.form_submit_button("ثبت اطلاعات در دیتاست")
-
-        if submitted:
-            total_percent = p1_perc + p2_perc + p3_perc + f1_perc + f2_perc + a_perc
-            if abs(total_percent - 100) > 0.01:
-                st.error(f"مجموع درصدها باید 100 باشد، اما {total_percent} است. لطفا مقادیر را اصلاح کنید.")
-            else:
-                converted_impact_strength = None
-                if impact_test_type_reg != 'نامشخص':
-                    if impact_not_break:
-                        converted_impact_strength = np.nan
-                    elif impact_strength is not None and impact_unit is not None:
-                        converted_impact_strength = convert_impact_to_base(impact_strength, impact_unit,
-                                                                           impact_test_type_reg)
-
-                converted_tensile_strength = convert_tensile_to_base(tensile_strength, tensile_unit)
-
-                data = {
-                    'Polymer1_Type': p1_type, 'Polymer1_Perc': p1_perc,
-                    'Polymer2_Type': p2_type, 'Polymer2_Perc': p2_perc,
-                    'Polymer3_Type': p3_type, 'Polymer3_Perc': p3_perc,
-                    'Filler1_Type': f1_type, 'Filler1_ParticleSize_um': f1_size, 'Filler1_Perc': f1_perc,
-                    'Filler2_Type': f2_type, 'Filler2_ParticleSize_um': f2_size, 'Filler2_Perc': f2_perc,
-                    'Additive_Type': a_type, 'Additive_Perc': a_perc, 'Additive_Functionality': a_func,
-                    'Impact_Value': converted_impact_strength, 'Tensile_Strength': converted_tensile_strength,
-                    'Impact_Unit': impact_unit, 'Tensile_Unit': tensile_unit,
-                    'Impact_Not_Break': impact_not_break,
-                    'Impact_Test_Type': impact_test_type_reg
-                }
-
-                if os.path.exists(EXCEL_FILE):
-                    existing_df = pd.read_excel(EXCEL_FILE)
-                    updated_df = pd.concat([existing_df, pd.DataFrame([data])], ignore_index=True)
-                else:
-                    updated_df = pd.DataFrame([data])
-                updated_df.to_excel(EXCEL_FILE, index=False)
-                st.success("اطلاعات با موفقیت ثبت شد و در فایل اکسل ذخیره گردید.")
-
-    # --- نمایش دیتاست کامل ---
-    st.markdown("---")
-    st.header("نمایش دیتاست")
-    st.dataframe(df_data)
-
-    # --- ستون سمت راست: فرم پیش‌بینی ---
-    with col_predict:
-        st.header("پیش‌بینی خواص")
-        with st.form("prediction_form"):
-            st.subheader("وارد کردن مشخصات فرمولاسیون برای پیش‌بینی")
-
-            p1_type_p = st.selectbox("نوع پلیمر اول (برای پیش‌بینی)", options=unique_values['All_Polymers'],
-                                     key="p1t_p")
-            p1_perc_p = st.number_input("درصد پلیمر اول (برای پیش‌بینی)", min_value=0.0, max_value=100.0, step=0.1,
-                                        key="p1p_p")
-
-            p2_type_p = st.selectbox("نوع پلیمر دوم (برای پیش‌بینی)", options=unique_values['All_Polymers'],
-                                     key="p2t_p")
-            p2_perc_p = st.number_input("درصد پلیمر دوم (برای پیش‌بینی)", min_value=0.0, max_value=100.0, step=0.1,
-                                        key="p2p_p")
-
-            p3_type_p = st.selectbox("نوع پلیمر سوم (برای پیش‌بینی)", options=unique_values['All_Polymers'],
-                                     key="p3t_p")
-            p3_perc_p = st.number_input("درصد پلیمر سوم (برای پیش‌بینی)", min_value=0.0, max_value=100.0, step=0.1,
-                                        key="p3p_p")
-
-            f1_type_p = st.selectbox("نوع فیلر اول (برای پیش‌بینی)", options=unique_values['All_Fillers'], key="f1t_p")
-            f1_perc_p = st.number_input("درصد فیلر اول (برای پیش‌بینی)", min_value=0.0, max_value=100.0, step=0.1,
-                                        key="f1p_p")
-            f1_size_p = st.number_input("اندازه ذرات فیلر اول (میکرون)", min_value=0.0, step=0.1, key="f1s_p")
-
-            f2_type_p = st.selectbox("نوع فیلر دوم (برای پیش‌بینی)", options=unique_values['All_Fillers'], key="f2t_p")
-            f2_perc_p = st.number_input("درصد فیلر دوم (برای پیش‌بینی)", min_value=0.0, max_value=100.0, step=0.1,
-                                        key="f2p_p")
-            f2_size_p = st.number_input("اندازه ذرات فیلر دوم (میکرون)", min_value=0.0, step=0.1, key="f2s_p")
-
-            a_type_p = st.selectbox("نوع افزودنی (برای پیش‌بینی)", options=unique_values['All_Additives'], key="at_p")
-            a_perc_p = st.number_input("درصد افزودنی (%)", min_value=0.0, max_value=100.0, step=0.1, key="ap_p")
-            a_func_p = st.text_input("عملکرد افزودنی (برای پیش‌بینی)", key="af_p")
-
-            st.subheader("شرایط آزمون")
-            impact_test_type_p = st.selectbox("نوع آزمون ضربه", options=unique_values['Impact_Test_Type'], key="itt_p")
-            impact_not_break_p = st.checkbox("آزمون منجر به شکست نشد؟", key="inb_p")
-
-            predict_button = st.form_submit_button("پیش‌بینی خواص")
+        st.subheader("نوع آزمون")
+        impact_test_type_p = st.selectbox("نوع آزمون ضربه", options=[''] + ['Charpy', 'Izod', 'Unknown'], key="impact_test_type_p")
+        impact_not_break_p = st.checkbox("شکسته نشد (No break)", key="impact_not_break_p")
+        
+        predict_button = st.form_submit_button(label='پیش‌بینی خواص')
 
         if predict_button:
-            data_to_predict = {
-                'Polymer1_Type': p1_type_p, 'Polymer1_Perc': p1_perc_p,
-                'Polymer2_Type': p2_type_p, 'Polymer2_Perc': p2_perc_p,
-                'Polymer3_Type': p3_type_p, 'Polymer3_Perc': p3_perc_p,
-                'Filler1_Type': f1_type_p, 'Filler1_ParticleSize_um': f1_size_p, 'Filler1_Perc': f1_perc_p,
-                'Filler2_Type': f2_type_p, 'Filler2_ParticleSize_um': f2_size_p, 'Filler2_Perc': f2_perc_p,
-                'Additive_Type': a_type_p, 'Additive_Perc': a_perc_p, 'Additive_Functionality': a_func_p,
-                'Impact_Test_Type': impact_test_type_p,
-                'Impact_Not_Break': impact_not_break_p
-            }
+            if impact_model is not None and tensile_model is not None:
+                data_to_predict = {
+                    'Polymer1_Type': p1_type_p, 'Polymer1_Perc': p1_perc_p,
+                    'Polymer2_Type': p2_type_p, 'Polymer2_Perc': p2_perc_p,
+                    'Polymer3_Type': p3_type_p, 'Polymer3_Perc': p3_perc_p,
+                    'Filler1_Type': f1_type_p, 'Filler1_ParticleSize_um': f1_size_p, 'Filler1_Perc': f1_perc_p,
+                    'Filler2_Type': f2_type_p, 'Filler2_ParticleSize_um': f2_size_p, 'Filler2_Perc': f2_perc_p,
+                    'Additive_Type': a_type_p, 'Additive_Perc': a_perc_p, 'Additive_Functionality': a_func_p,
+                    'Impact_Test_Type': impact_test_type_p, 'Impact_Not_Break': impact_not_break_p
+                }
+                
+                predictions = predict_properties(data_to_predict, impact_model, tensile_model, impact_cols, tensile_cols)
 
-            try:
-                predictions = predict_properties(impact_model, tensile_model, data_to_predict, training_columns_impact,
-                                                 training_columns_tensile)
-                st.subheader("نتیجه پیش‌بینی")
-
-                if 'impact' in predictions:
-                    st.success(f"مقدار Impact Value پیش‌بینی‌شده: {predictions['impact']:.2f} J/m")
-                    st.warning(
-                        "توجه: مدل قادر به پیش‌بینی وضعیت 'عدم شکست' نیست و تنها یک مقدار عددی را پیش‌بینی می‌کند.")
-
-                if 'tensile' in predictions:
-                    st.success(f"مقدار Tensile Strength پیش‌بینی‌شده: {predictions['tensile']:.2f} MPa")
-            except Exception as e:
-                st.error(f"خطا در پیش‌بینی: {e}")
+                if predictions:
+                    st.success("پیش‌بینی با موفقیت انجام شد!")
+                    
+                    st.subheader("نتایج پیش‌بینی")
+                    st.write(f"**خواص ضربه:** {predictions['impact']:.2f} J/m²")
+                    st.write(f"**استحکام کششی:** {predictions['tensile']:.2f} MPa")
+                else:
+                    st.error("پیش‌بینی انجام نشد. لطفاً ورودی‌های خود را بررسی کنید.")
+            else:
+                st.warning("فایل‌های مدل پیدا نشدند. لطفاً آن‌ها را در کنار فایل app.py قرار دهید.")
