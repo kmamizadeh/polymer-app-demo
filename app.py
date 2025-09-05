@@ -1,9 +1,5 @@
 
 
-# Paths to the files. These should be relative to the script location.
-EXCEL_FILE = 'Polymer_Properties_Processed_by_python1.xlsx'
-IMPACT_MODEL_FILE = 'regression_model.pkl'
-TENSILE_MODEL_FILE = 'tensile_model.pkl'
 
 import streamlit as st
 import pandas as pd
@@ -47,14 +43,23 @@ st.markdown("""
     }
 
     /* Input fields and selectboxes */
-    .stTextInput input, .stNumberInput input, .stSelectbox div {
+    .stTextInput input, .stNumberInput input {
         color: #333 !important; /* Force text color inside inputs */
         border-radius: 8px;
         border: 1px solid #ccc;
         padding: 10px;
         transition: all 0.2s ease-in-out;
     }
-
+    
+    /* Fix for Selectbox nesting issue: targets only the main visible container */
+    .stSelectbox > div:first-child > div {
+        color: #333 !important;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        transition: all 0.2s ease-in-out;
+    }
+    
     .stTextInput>div>div>input:focus, .stSelectbox>div>div:focus, .stNumberInput>div>div>input:focus {
         border-color: #007bff;
         box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
@@ -368,7 +373,6 @@ st.markdown("می‌توانید مقالات و منابع مربوط به ای
 
 # List of PDF files to be offered for download. 
 # You can add more files to this list.
-
 pdf_files = [
     {"name": "مقاله شماره ۱: Mechanical Properties of Blends Containing HDPE and PP", "path": "10.1002@app.1982.070270704.pdf"},
     {"name": "مقاله شماره ۲: Mechanical Properties and Morphologies of Polypropylene With Different Sizes of Calcium Carbonate Particles", "path": "10.1002@pc.20211.pdf"},
@@ -392,11 +396,7 @@ for file in pdf_files:
     except FileNotFoundError:
         st.warning(f"فایل {pdf_file_path} پیدا نشد. لطفاً آن را به پوشه پروژه اضافه کنید.")
 
-pdf_files = [
-    {"name": "مقاله شماره ۱: Mechanical Properties of Blends Containing HDPE and PP", "path": "10.1002@app.1982.070270704.pdf"},
-    {"name": "مقاله شماره ۲: Mechanical Properties and Morphologies of Polypropylene With Different Sizes of Calcium Carbonate Particles", "path": "10.1002@pc.20211.pdf"},
-    {"name": "مقاله شماره ۲: بررسی اثر پرکننده معدنی تالک بر روی خواص فیزیکی مکانیکی پلی پروپیلن و آلیاژهای آن", "path": "26716-fulltext.pdf"}
-]
+
 
 
 
