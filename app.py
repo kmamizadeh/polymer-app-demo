@@ -1,7 +1,9 @@
 
 
-
-
+# Paths to the files. These should be relative to the script location.
+EXCEL_FILE = 'Polymer_Properties_Processed_by_python1.xlsx'
+IMPACT_MODEL_FILE = 'regression_model.pkl'
+TENSILE_MODEL_FILE = 'tensile_model.pkl'
 
 import streamlit as st
 import pandas as pd
@@ -20,8 +22,8 @@ st.markdown("""
     /* General body and typography */
     body {
         font-family: 'Vazirmatn', sans-serif;
-        color: #333;
         background-color: #f4f7f9;
+        color: #333;
     }
     
     .stApp {
@@ -39,14 +41,14 @@ st.markdown("""
         text-align: right;
     }
 
-    /* Explicitly setting a dark color for text components to avoid mobile issues */
-    .stMarkdown, .stSelectbox, .stNumberInput, .stTextInput {
+    /* Explicitly setting a dark color for all text components */
+    .stMarkdown, .stSelectbox, .stNumberInput, .stTextInput, .stCheckbox, .stButton {
         color: #333;
     }
 
     /* Input fields and selectboxes */
-    .stTextInput>div>div>input, .stSelectbox>div>div, .stNumberInput>div>div>input {
-        color: #333; /* Explicitly setting the text color inside input boxes */
+    .stTextInput input, .stNumberInput input, .stSelectbox div {
+        color: #333 !important; /* Force text color inside inputs */
         border-radius: 8px;
         border: 1px solid #ccc;
         padding: 10px;
@@ -389,5 +391,13 @@ for file in pdf_files:
         )
     except FileNotFoundError:
         st.warning(f"فایل {pdf_file_path} پیدا نشد. لطفاً آن را به پوشه پروژه اضافه کنید.")
+
+pdf_files = [
+    {"name": "مقاله شماره ۱: Mechanical Properties of Blends Containing HDPE and PP", "path": "10.1002@app.1982.070270704.pdf"},
+    {"name": "مقاله شماره ۲: Mechanical Properties and Morphologies of Polypropylene With Different Sizes of Calcium Carbonate Particles", "path": "10.1002@pc.20211.pdf"},
+    {"name": "مقاله شماره ۲: بررسی اثر پرکننده معدنی تالک بر روی خواص فیزیکی مکانیکی پلی پروپیلن و آلیاژهای آن", "path": "26716-fulltext.pdf"}
+]
+
+
 
 
