@@ -5,9 +5,9 @@ import os
 import joblib
 
 # Paths to the files. These should be relative to the script location.
-EXCEL_FILE = 'Polymer_Properties_Processed_by_python1.xlsx'
-IMPACT_MODEL_FILE = 'regression_model.pkl'
-TENSILE_MODEL_FILE = 'tensile_model.pkl'
+EXCEL_FILE = 'to_github/Polymer_Properties_Processed_by_python1.xlsx'
+IMPACT_MODEL_FILE = 'to_github/regression_model.pkl'
+TENSILE_MODEL_FILE = 'to_github/tensile_model.pkl'
 
 # --- Custom CSS for a modern, clean look ---
 st.markdown("""
@@ -24,13 +24,8 @@ st.markdown("""
     }
 
     /* Main title and headers */
-    .st-emotion-cache-1wivd27 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #007bff;
+    .centered-title h1, .centered-description p {
         text-align: center;
-        margin-bottom: 20px;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
     
     h1, h2, h3 {
@@ -217,12 +212,13 @@ def predict_properties(data_to_predict, impact_model, tensile_model, impact_cols
 
 # --- Main App Structure ---
 st.set_page_config(layout="wide", page_title="پیش‌بینی خواص پلیمر")
-st.title("🧪 برنامه پیش‌بینی و ثبت خواص کامپوزیت‌های پلیمری")
-
+st.markdown("<div class='centered-title'><h1>🧪 برنامه پیش‌بینی و ثبت خواص کامپوزیت‌های پلیمری</h1></div>", unsafe_allow_html=True)
 st.markdown(
     """
-    این برنامه به شما امکان می‌دهد خواص فرمولاسیون‌های پلیمری را ثبت کنید
-    و بر اساس مدل‌های هوش مصنوعی، خواص نهایی آن‌ها را پیش‌بینی نمایید.
+    <div class='centered-description'>
+    <p>این برنامه به شما امکان می‌دهد خواص فرمولاسیون‌های پلیمری را ثبت کنید
+    و بر اساس مدل‌های هوش مصنوعی، خواص نهایی آن‌ها را پیش‌بینی نمایید.</p>
+    </div>
     """, unsafe_allow_html=True)
 
 df, unique_values = load_data_and_get_unique_values()
@@ -333,12 +329,7 @@ with col_predict:
         impact_test_type_p = st.selectbox("نوع آزمون ضربه", options=[''] + ['Charpy', 'Izod', 'Unknown'], key="impact_test_type_p")
         impact_not_break_p = st.checkbox("شکسته نشد (No break)", key="impact_not_break_p")
         
-        st.markdown("---")
-        st.markdown("### 🎯 کنترل کیفیت (اختیاری)")
-        target_impact = st.number_input("حداقل خواص ضربه (J/m²)", min_value=0.0, key="target_impact_p")
-        target_tensile = st.number_input("حداقل استحکام کششی (MPa)", min_value=0.0, key="target_tensile_p")
-
-        predict_button = st.button(label='🚀 پیش‌بینی و کنترل کیفیت', key="predict_btn")
+        predict_button = st.button(label='🚀 پیش‌بینی خواص', key="predict_btn")
 
         if predict_button:
             if impact_model is not None and tensile_model is not None:
@@ -360,23 +351,6 @@ with col_predict:
                     st.subheader("نتایج پیش‌بینی")
                     st.info(f"**خواص ضربه:** {predictions['impact']:.2f} J/m²")
                     st.info(f"**استحکام کششی:** {predictions['tensile']:.2f} MPa")
-
-                    st.markdown("---")
-                    st.subheader("نتیجه کنترل کیفیت")
-                    
-                    passed_impact = predictions['impact'] >= target_impact
-                    passed_tensile = predictions['tensile'] >= target_tensile
-                    
-                    if passed_impact and passed_tensile:
-                        st.success("✅ کنترل کیفیت با موفقیت انجام شد. خواص پیش‌بینی‌شده با تارگت‌های شما مطابقت دارد.")
-                    else:
-                        st.error("❌ کنترل کیفیت با شکست مواجه شد. خواص پیش‌بینی‌شده به تارگت‌های مورد انتظار نرسید.")
-                    
-                    if not passed_impact:
-                        st.warning(f"❗ خواص ضربه ({predictions['impact']:.2f}) از تارگت ({target_impact:.2f}) کمتر است.")
-                    if not passed_tensile:
-                        st.warning(f"❗ استحکام کششی ({predictions['tensile']:.2f}) از تارگت ({target_tensile:.2f}) کمتر است.")
-
                 else:
                     st.error("❌ پیش‌بینی انجام نشد. لطفاً ورودی‌های خود را بررسی کنید.")
             else:
