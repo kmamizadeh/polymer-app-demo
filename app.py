@@ -1,6 +1,8 @@
 
 
 
+
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -38,22 +40,13 @@ st.markdown("""
     }
 
     /* Explicitly setting a dark color for text components to avoid mobile issues */
-    .stMarkdown, .stSelectbox, .stNumberInput {
+    .stMarkdown, .stSelectbox, .stNumberInput, .stTextInput {
         color: #333;
-    }
-    
-    /* Container styling */
-    .st-emotion-cache-1xydc67 {
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        background-color: #ffffff;
-        margin-bottom: 20px;
-        border: 1px solid #e0e0e0;
     }
 
     /* Input fields and selectboxes */
     .stTextInput>div>div>input, .stSelectbox>div>div, .stNumberInput>div>div>input {
+        color: #333; /* Explicitly setting the text color inside input boxes */
         border-radius: 8px;
         border: 1px solid #ccc;
         padding: 10px;
@@ -373,12 +366,12 @@ st.markdown("می‌توانید مقالات و منابع مربوط به ای
 
 # List of PDF files to be offered for download. 
 # You can add more files to this list.
+
 pdf_files = [
     {"name": "مقاله شماره ۱: Mechanical Properties of Blends Containing HDPE and PP", "path": "10.1002@app.1982.070270704.pdf"},
     {"name": "مقاله شماره ۲: Mechanical Properties and Morphologies of Polypropylene With Different Sizes of Calcium Carbonate Particles", "path": "10.1002@pc.20211.pdf"},
     {"name": "مقاله شماره ۲: بررسی اثر پرکننده معدنی تالک بر روی خواص فیزیکی مکانیکی پلی پروپیلن و آلیاژهای آن", "path": "26716-fulltext.pdf"}
 ]
-
 
 for file in pdf_files:
     pdf_file_path = file["path"]
@@ -396,6 +389,5 @@ for file in pdf_files:
         )
     except FileNotFoundError:
         st.warning(f"فایل {pdf_file_path} پیدا نشد. لطفاً آن را به پوشه پروژه اضافه کنید.")
-
 
 
