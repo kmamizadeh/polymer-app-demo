@@ -1,6 +1,3 @@
-
-
-
 import streamlit as st
 import pandas as pd
 import os
@@ -340,3 +337,4 @@ if data_loaded and impact_model and training_columns_impact is not None:
                     st.success(f"مقدار Tensile Strength پیش‌بینی‌شده: {predictions['tensile']:.2f} MPa")
             except Exception as e:
                 st.error(f"خطا در پیش‌بینی: {e}")
+
