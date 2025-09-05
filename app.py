@@ -1,3 +1,6 @@
+
+
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -21,6 +24,7 @@ st.markdown("""
     
     .stApp {
         background-color: #f4f7f9;
+        color: #333; /* Ensuring all app text is dark */
     }
 
     /* Main title and headers */
@@ -31,6 +35,11 @@ st.markdown("""
     h1, h2, h3 {
         color: #2c3e50;
         text-align: right;
+    }
+
+    /* Explicitly setting a dark color for text components to avoid mobile issues */
+    .stMarkdown, .stSelectbox, .stNumberInput {
+        color: #333;
     }
     
     /* Container styling */
@@ -369,6 +378,7 @@ pdf_files = [
     {"name": "مقاله شماره ۲: Mechanical Properties and Morphologies of Polypropylene With Different Sizes of Calcium Carbonate Particles", "path": "10.1002@pc.20211.pdf"},
     {"name": "مقاله شماره ۲: بررسی اثر پرکننده معدنی تالک بر روی خواص فیزیکی مکانیکی پلی پروپیلن و آلیاژهای آن", "path": "26716-fulltext.pdf"}
 ]
+
 
 for file in pdf_files:
     pdf_file_path = file["path"]
