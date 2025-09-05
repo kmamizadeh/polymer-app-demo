@@ -365,8 +365,9 @@ st.markdown("می‌توانید مقالات و منابع مربوط به ای
 # List of PDF files to be offered for download. 
 # You can add more files to this list.
 pdf_files = [
-    {"name": "مقاله شماره ۱: بررسی خواص ضربه پلیمرها", "path": "article1.pdf"},
-    {"name": "مقاله شماره ۲: پیش‌بینی استحکام کششی", "path": "article2.pdf"}
+    {"name": "مقاله شماره ۱: Mechanical Properties of Blends Containing HDPE and PP", "path": "10.1002@app.1982.070270704.pdf"},
+    {"name": "مقاله شماره ۲: Mechanical Properties and Morphologies of Polypropylene With Different Sizes of Calcium Carbonate Particles", "path": "10.1002@pc.20211.pdf"}
+    {"name": "مقاله شماره ۲: بررسی اثر پرکننده معدنی تالک بر روی خواص فیزیکی مکانیکی پلی پروپیلن و آلیاژهای آن", "path": "26716-fulltext.pdf"}
 ]
 
 for file in pdf_files:
@@ -385,4 +386,5 @@ for file in pdf_files:
         )
     except FileNotFoundError:
         st.warning(f"فایل {pdf_file_path} پیدا نشد. لطفاً آن را به پوشه پروژه اضافه کنید.")
+
 
