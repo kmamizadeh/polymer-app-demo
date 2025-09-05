@@ -5,9 +5,9 @@ import os
 import joblib
 
 # Paths to the files. These should be relative to the script location.
-EXCEL_FILE = 'Polymer_Properties_Processed_by_python1.xlsx'
-IMPACT_MODEL_FILE = 'regression_model.pkl'
-TENSILE_MODEL_FILE = 'tensile_model.pkl'
+EXCEL_FILE = 'to_github/Polymer_Properties_Processed_by_python1.xlsx'
+IMPACT_MODEL_FILE = 'to_github/regression_model.pkl'
+TENSILE_MODEL_FILE = 'to_github/tensile_model.pkl'
 
 # --- Custom CSS for a modern, clean look ---
 st.markdown("""
@@ -355,3 +355,33 @@ with col_predict:
                     st.error("❌ پیش‌بینی انجام نشد. لطفاً ورودی‌های خود را بررسی کنید.")
             else:
                 st.warning("فایل‌های مدل پیدا نشدند. لطفاً آن‌ها را در کنار فایل app.py قرار دهید.")
+
+
+# --- New section for downloading articles ---
+st.markdown("---")
+st.header("📄 منابع و مقالات")
+st.markdown("می‌توانید مقالات و منابع مربوط به این پروژه را از اینجا دانلود کنید.")
+
+# List of PDF files to be offered for download. 
+# You can add more files to this list.
+pdf_files = [
+    {"name": "مقاله شماره ۱: بررسی خواص ضربه پلیمرها", "path": "article1.pdf"},
+    {"name": "مقاله شماره ۲: پیش‌بینی استحکام کششی", "path": "article2.pdf"}
+]
+
+for file in pdf_files:
+    pdf_file_path = file["path"]
+    
+    # Read the PDF file in binary mode
+    try:
+        with open(pdf_file_path, "rb") as pdf_file:
+            pdf_bytes = pdf_file.read()
+        
+        st.download_button(
+            label=f"دانلود {file['name']}",
+            data=pdf_bytes,
+            file_name=os.path.basename(pdf_file_path),
+            mime="application/pdf"
+        )
+    except FileNotFoundError:
+        st.warning(f"فایل {pdf_file_path} پیدا نشد. لطفاً آن را به پوشه پروژه اضافه کنید.")
