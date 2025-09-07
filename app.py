@@ -68,7 +68,7 @@ st.markdown("""
         color: #4a5568 !important;
     }
 
-    /* --- Button Styling --- */
+    /* --- Button Styling (Updated) --- */
     /* Target the button's internal div which contains the text */
     button[data-testid="stFormSubmitButton"] > div,
     button[data-testid="stButton"] > div {
@@ -80,7 +80,7 @@ st.markdown("""
         transition: all 0.2s ease-in-out !important;
     }
     
-    /* Style the button element itself */
+    /* Style the button element itself and its inner span for better compatibility */
     button[data-testid="stFormSubmitButton"],
     button[data-testid="stButton"] {
         background-color: #ffffff !important;
@@ -88,6 +88,11 @@ st.markdown("""
         border-radius: 8px !important;
     }
 
+    button[data-testid="stFormSubmitButton"] span,
+    button[data-testid="stButton"] span {
+        color: #4a5568 !important;
+    }
+    
     /* Button on hover */
     button[data-testid="stFormSubmitButton"]:hover,
     button[data-testid="stButton"]:hover {
