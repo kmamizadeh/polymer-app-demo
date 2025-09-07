@@ -214,7 +214,6 @@ with col_form:
         st.markdown("### ۱. مشخصات فرمولاسیون")
         
         st.markdown("**پلیمرها**")
-        # FIX: Changed to text_input
         p1_type = st.text_input("نوع پلیمر اول", key="p1_type_form")
         p1_perc = st.number_input("درصد پلیمر اول (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p1_perc_form")
         p2_type = st.text_input("نوع پلیمر دوم", key="p2_type_form")
@@ -225,7 +224,6 @@ with col_form:
         st.markdown("---")
 
         st.markdown("**فیلرها**")
-        # FIX: Changed to text_input
         f1_type = st.text_input("نوع فیلر اول", key="f1_type_form")
         f1_size = st.number_input("اندازه ذرات فیلر اول (میکرون)", min_value=0.0, key="f1_size_form")
         f1_perc = st.number_input("درصد فیلر اول (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f1_perc_form")
@@ -236,7 +234,6 @@ with col_form:
         st.markdown("---")
 
         st.markdown("**افزودنی‌ها**")
-        # FIX: Changed to text_input
         a_type = st.text_input("نوع افزودنی", key="a_type_form")
         a_perc = st.number_input("درصد افزودنی (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="a_perc_form")
         a_func = st.text_input("عملکرد افزودنی", key="a_func_form")
@@ -286,69 +283,69 @@ with col_form:
 with col_predict:
     st.header("🔮 پیش‌بینی خواص")
 
-    with st.container():
-        st.markdown("### مشخصات فرمولاسیون برای پیش‌بینی")
+    if unique_values:
+        with st.container():
+            st.markdown("### مشخصات فرمولاسیون برای پیش‌بینی")
+            st.markdown("**پلیمرها**")
+            
+            p1_type_p = st.selectbox("نوع پلیمر اول", options=[''] + list(unique_values['all_polymers']), key="p1_type_p")
+            p1_perc_p = st.number_input("درصد پلیمر اول (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p1_perc_p")
+            p2_type_p = st.selectbox("نوع پلیمر دوم", options=[''] + list(unique_values['all_polymers']), key="p2_type_p")
+            p2_perc_p = st.number_input("درصد پلیمر دوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p2_perc_p")
+            p3_type_p = st.selectbox("نوع پلیمر سوم", options=[''] + list(unique_values['all_polymers']), key="p3_type_p")
+            p3_perc_p = st.number_input("درصد پلیمر سوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p3_perc_p")
+            
+            st.markdown("---")
 
-        st.markdown("**پلیمرها**")
-        # FIX: Changed to text_input
-        p1_type_p = st.text_input("نوع پلیمر اول", key="p1_type_p")
-        p1_perc_p = st.number_input("درصد پلیمر اول (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p1_perc_p")
-        p2_type_p = st.text_input("نوع پلیمر دوم", key="p2_type_p")
-        p2_perc_p = st.number_input("درصد پلیمر دوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p2_perc_p")
-        p3_type_p = st.text_input("نوع پلیمر سوم", key="p3_type_p")
-        p3_perc_p = st.number_input("درصد پلیمر سوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p3_perc_p")
-        
-        st.markdown("---")
+            st.markdown("**فیلرها**")
+            f1_type_p = st.selectbox("نوع فیلر اول", options=[''] + list(unique_values['all_fillers']), key="f1_type_p")
+            f1_size_p = st.number_input("اندازه ذرات فیلر اول (میکرون)", min_value=0.0, key="f1_size_p")
+            f1_perc_p = st.number_input("درصد فیلر اول (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f1_perc_p")
+            f2_type_p = st.selectbox("نوع فیلر دوم", options=[''] + list(unique_values['all_fillers']), key="f2_type_p")
+            f2_size_p = st.number_input("اندازه ذرات فیلر دوم (میکرون)", min_value=0.0, key="f2_size_p")
+            f2_perc_p = st.number_input("درصد فیلر دوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f2_perc_p")
 
-        st.markdown("**فیلرها**")
-        # FIX: Changed to text_input
-        f1_type_p = st.text_input("نوع فیلر اول", key="f1_type_p")
-        f1_size_p = st.number_input("اندازه ذرات فیلر اول (میکرون)", min_value=0.0, key="f1_size_p")
-        f1_perc_p = st.number_input("درصد فیلر اول (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f1_perc_p")
-        f2_type_p = st.text_input("نوع فیلر دوم", key="f2_type_p")
-        f2_size_p = st.number_input("اندازه ذرات فیلر دوم (میکرون)", min_value=0.0, key="f2_size_p")
-        f2_perc_p = st.number_input("درصد فیلر دوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f2_perc_p")
+            st.markdown("---")
 
-        st.markdown("---")
+            st.markdown("**افزودنی‌ها**")
+            a_type_p = st.selectbox("نوع افزودنی", options=[''] + list(unique_values['all_additives']), key="a_type_p")
+            a_perc_p = st.number_input("درصد افزودنی (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="a_perc_p")
+            a_func_p = st.text_input("عملکرد افزودنی", key="a_func_p")
+            
+            st.markdown("---")
 
-        st.markdown("**افزودنی‌ها**")
-        # FIX: Changed to text_input
-        a_type_p = st.text_input("نوع افزودنی", key="a_type_p")
-        a_perc_p = st.number_input("درصد افزودنی (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="a_perc_p")
-        a_func_p = st.text_input("عملکرد افزودنی", key="a_func_p")
-        
-        st.markdown("---")
+            st.markdown("### نوع آزمون")
+            impact_test_type_p = st.selectbox("نوع آزمون ضربه", options=[''] + ['Charpy', 'Izod', 'Unknown'], key="impact_test_type_p")
+            impact_not_break_p = st.checkbox("شکسته نشد (No break)", key="impact_not_break_p")
+            
+            predict_button = st.button(label='🚀 پیش‌بینی خواص', key="predict_btn")
 
-        st.markdown("### نوع آزمون")
-        impact_test_type_p = st.selectbox("نوع آزمون ضربه", options=[''] + ['Charpy', 'Izod', 'Unknown'], key="impact_test_type_p")
-        impact_not_break_p = st.checkbox("شکسته نشد (No break)", key="impact_not_break_p")
-        
-        predict_button = st.button(label='🚀 پیش‌بینی خواص', key="predict_btn")
-
-        if predict_button:
-            if impact_model is not None and tensile_model is not None:
-                data_to_predict = {
-                    'Polymer1_Type': p1_type_p, 'Polymer1_Perc': p1_perc_p,
-                    'Polymer2_Type': p2_type_p, 'Polymer2_Perc': p2_perc_p,
-                    'Polymer3_Type': p3_type_p, 'Polymer3_Perc': p3_perc_p,
-                    'Filler1_Type': f1_type_p, 'Filler1_ParticleSize_um': f1_size_p, 'Filler1_Perc': f1_perc_p,
-                    'Filler2_Type': f2_type_p, 'Filler2_ParticleSize_um': f2_size_p, 'Filler2_Perc': f2_perc_p,
-                    'Additive_Type': a_type_p, 'Additive_Perc': a_perc_p, 'Additive_Functionality': a_func_p,
-                    'Impact_Test_Type': impact_test_type_p, 'Impact_Not_Break': impact_not_break_p
-                }
-                
-                predictions = predict_properties(data_to_predict, impact_model, tensile_model, impact_cols, tensile_cols)
-
-                if predictions:
-                    st.success("✅ پیش‌بینی با موفقیت انجام شد!")
+            if predict_button:
+                if impact_model is not None and tensile_model is not None:
+                    data_to_predict = {
+                        'Polymer1_Type': p1_type_p, 'Polymer1_Perc': p1_perc_p,
+                        'Polymer2_Type': p2_type_p, 'Polymer2_Perc': p2_perc_p,
+                        'Polymer3_Type': p3_type_p, 'Polymer3_Perc': p3_perc_p,
+                        'Filler1_Type': f1_type_p, 'Filler1_ParticleSize_um': f1_size_p, 'Filler1_Perc': f1_perc_p,
+                        'Filler2_Type': f2_type_p, 'Filler2_ParticleSize_um': f2_size_p, 'Filler2_Perc': f2_perc_p,
+                        'Additive_Type': a_type_p, 'Additive_Perc': a_perc_p, 'Additive_Functionality': a_func_p,
+                        'Impact_Test_Type': impact_test_type_p, 'Impact_Not_Break': impact_not_break_p
+                    }
                     
-                    st.subheader("نتایج پیش‌بینی")
-                    st.info(f"**خواص ضربه:** {predictions['impact']:.2f} J/m²")
-                    st.info(f"**استحکام کششی:** {predictions['tensile']:.2f} MPa")
+                    predictions = predict_properties(data_to_predict, impact_model, tensile_model, impact_cols, tensile_cols)
+
+                    if predictions:
+                        st.success("✅ پیش‌بینی با موفقیت انجام شد!")
+                        
+                        st.subheader("نتایج پیش‌بینی")
+                        st.info(f"**خواص ضربه:** {predictions['impact']:.2f} J/m²")
+                        st.info(f"**استحکام کششی:** {predictions['tensile']:.2f} MPa")
+                    else:
+                        st.error("❌ پیش‌بینی انجام نشد. لطفاً ورودی‌های خود را بررسی کنید.")
                 else:
-                    st.error("❌ پیش‌بینی انجام نشد. لطفاً ورودی‌های خود را بررسی کنید.")
-            else:
-                st.warning("فایل‌های مدل پیدا نشدند. لطفاً آن‌ها را در کنار فایل app.py قرار دهید.")
+                    st.warning("فایل‌های مدل پیدا نشدند. لطفاً آن‌ها را در کنار فایل app.py قرار دهید.")
+    else:
+        st.warning("❌ دیتاست پیدا نشد. لطفاً فایل 'Polymer_Properties_Processed_by_python1.xlsx' را در پوشه پروژه قرار دهید تا بتوانید از این بخش استفاده کنید.")
 
 
 # --- New section for downloading articles ---
