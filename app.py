@@ -68,34 +68,27 @@ st.markdown("""
         color: #4a5568 !important;
     }
 
-    /* --- Button Styling (Updated) --- */
-    /* Target the button's internal div which contains the text */
-    button[data-testid="stFormSubmitButton"] > div,
-    button[data-testid="stButton"] > div {
+    /* --- Button Styling (Updated to be more aggressive) --- */
+    /* Target the buttons directly using their data-testid for maximum specificity */
+    button[data-testid*="stButton"],
+    button[data-testid*="stFormSubmitButton"] {
         background-color: #ffffff !important;
-        color: #4a5568 !important;
         border: 1px solid #cbd5e0 !important;
         border-radius: 8px !important;
-        padding: 10px 20px !important;
         transition: all 0.2s ease-in-out !important;
     }
-    
-    /* Style the button element itself and its inner span for better compatibility */
-    button[data-testid="stFormSubmitButton"],
-    button[data-testid="stButton"] {
-        background-color: #ffffff !important;
-        border: 1px solid #cbd5e0 !important;
-        border-radius: 8px !important;
-    }
 
-    button[data-testid="stFormSubmitButton"] span,
-    button[data-testid="stButton"] span {
+    /* Ensure the text color is also correct on a different layer */
+    button[data-testid*="stButton"] p,
+    button[data-testid*="stFormSubmitButton"] p,
+    button[data-testid*="stButton"] span,
+    button[data-testid*="stFormSubmitButton"] span {
         color: #4a5568 !important;
     }
     
     /* Button on hover */
-    button[data-testid="stFormSubmitButton"]:hover,
-    button[data-testid="stButton"]:hover {
+    button[data-testid*="stButton"]:hover,
+    button[data-testid*="stFormSubmitButton"]:hover {
         background-color: #e2e8f0 !important;
         border-color: #a0aec0 !important;
     }
