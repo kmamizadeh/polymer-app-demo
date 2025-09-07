@@ -34,11 +34,6 @@ st.markdown("""
         text-align: right;
     }
 
-    /* Explicitly setting a dark color for all text components */
-    .stMarkdown, .stSelectbox, .stNumberInput, .stTextInput, .stCheckbox, .stButton {
-        color: #333;
-    }
-
     /* Input fields and selectboxes */
     .stTextInput input, .stNumberInput input {
         color: #333 !important; /* Force text color inside inputs */
@@ -47,14 +42,14 @@ st.markdown("""
         padding: 10px;
         transition: all 0.2s ease-in-out;
     }
-    
-    /* Fix for Selectbox nesting issue: targets only the main visible container */
-    .stSelectbox > div:first-child > div {
+
+    /* FIX: Set text and background color for better visibility on responsive view */
+    .stTextInput input, .stNumberInput input, 
+    .stSelectbox > div:first-child > div, 
+    .stSelectbox > div:first-child > div > div > span,
+    .stSelectbox > div:first-child > div > div > input {
         color: #333 !important;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        padding: 10px;
-        transition: all 0.2s ease-in-out;
+        background-color: #fff !important;
     }
     
     .stTextInput>div>div>input:focus, .stSelectbox>div>div:focus, .stNumberInput>div>div>input:focus {
@@ -120,8 +115,16 @@ def load_data_and_get_unique_values():
     
     df = pd.read_excel(EXCEL_FILE)
     
+    # FIX 1: Combine unique values from all related columns
+    all_polymers = pd.concat([df['Polymer1_Type'], df['Polymer2_Type'], df['Polymer3_Type']]).dropna().unique()
+    all_fillers = pd.concat([df['Filler1_Type'], df['Filler2_Type']]).dropna().unique()
+    all_additives = df['Additive_Type'].dropna().unique()
+
     unique_values = {
-        'Polymer1_Type': sorted(df['Polymer1_Type'].unique()),
+        'all_polymers': sorted(all_polymers),
+        'all_fillers': sorted(all_fillers),
+        'all_additives': sorted(all_additives),
+        'Polymer1_Type': sorted(df['Polymer1_Type'].unique()), # Kept for old logic compatibility if needed
         'Polymer2_Type': sorted(df['Polymer2_Type'].unique()),
         'Polymer3_Type': sorted(df['Polymer3_Type'].unique()),
         'Filler1_Type': sorted(df['Filler1_Type'].unique()),
@@ -141,8 +144,6 @@ def load_model_and_get_columns():
         impact_model = joblib.load(IMPACT_MODEL_FILE)
         tensile_model = joblib.load(TENSILE_MODEL_FILE)
         
-        # Get feature names from the loaded models.
-        # This is the single source of truth for the required columns.
         impact_model_columns = impact_model.feature_names_in_.tolist()
         tensile_model_columns = tensile_model.feature_names_in_.tolist()
 
@@ -192,7 +193,6 @@ def predict_properties(data_to_predict, impact_model, tensile_model, impact_cols
         processed_df = pd.get_dummies(input_df, columns=categorical_cols)
 
         # Ensure the processed DataFrame has the same columns as the models were trained on.
-        # This is the most crucial step for fixing the "feature names mismatch" error.
         df_impact = processed_df.reindex(columns=impact_cols, fill_value=0)
         df_tensile = processed_df.reindex(columns=tensile_cols, fill_value=0)
         
@@ -228,27 +228,30 @@ with col_form:
         st.markdown("### ۱. مشخصات فرمولاسیون")
         
         st.markdown("**پلیمرها**")
-        p1_type = st.selectbox("نوع پلیمر اول", options=[''] + unique_values['Polymer1_Type'], key="p1_type_form")
+        # FIX 1: Use combined list for options
+        p1_type = st.selectbox("نوع پلیمر اول", options=[''] + unique_values['all_polymers'], key="p1_type_form")
         p1_perc = st.number_input("درصد پلیمر اول (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p1_perc_form")
-        p2_type = st.selectbox("نوع پلیمر دوم", options=[''] + unique_values['Polymer2_Type'], key="p2_type_form")
+        p2_type = st.selectbox("نوع پلیمر دوم", options=[''] + unique_values['all_polymers'], key="p2_type_form")
         p2_perc = st.number_input("درصد پلیمر دوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p2_perc_form")
-        p3_type = st.selectbox("نوع پلیمر سوم", options=[''] + unique_values['Polymer3_Type'], key="p3_type_form")
+        p3_type = st.selectbox("نوع پلیمر سوم", options=[''] + unique_values['all_polymers'], key="p3_type_form")
         p3_perc = st.number_input("درصد پلیمر سوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p3_perc_form")
         
         st.markdown("---")
 
         st.markdown("**فیلرها**")
-        f1_type = st.selectbox("نوع فیلر اول", options=[''] + unique_values['Filler1_Type'], key="f1_type_form")
+        # FIX 1: Use combined list for options
+        f1_type = st.selectbox("نوع فیلر اول", options=[''] + unique_values['all_fillers'], key="f1_type_form")
         f1_size = st.number_input("اندازه ذرات فیلر اول (میکرون)", min_value=0.0, key="f1_size_form")
         f1_perc = st.number_input("درصد فیلر اول (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f1_perc_form")
-        f2_type = st.selectbox("نوع فیلر دوم", options=[''] + unique_values['Filler2_Type'], key="f2_type_form")
+        f2_type = st.selectbox("نوع فیلر دوم", options=[''] + unique_values['all_fillers'], key="f2_type_form")
         f2_size = st.number_input("اندازه ذرات فیلر دوم (میکرون)", min_value=0.0, key="f2_size_form")
         f2_perc = st.number_input("درصد فیلر دوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f2_perc_form")
 
         st.markdown("---")
 
         st.markdown("**افزودنی‌ها**")
-        a_type = st.selectbox("نوع افزودنی", options=[''] + unique_values['Additive_Type'], key="a_type_form")
+        # FIX 1: Use combined list for options
+        a_type = st.selectbox("نوع افزودنی", options=[''] + unique_values['all_additives'], key="a_type_form")
         a_perc = st.number_input("درصد افزودنی (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="a_perc_form")
         a_func = st.selectbox("عملکرد افزودنی", options=[''] + ['Toughener', 'Impact Modifier', 'Colorant', 'Antioxidant', 'Unknown'], key="a_func_form")
         
@@ -261,7 +264,15 @@ with col_form:
         st.markdown("---")
         
         st.markdown("### ۳. خواص نهایی")
-        impact_value = st.number_input(f"خواص ضربه (J/m)", min_value=0.0, key="impact_value_form")
+        # FIX 2: Dynamic input for Impact Value
+        impact_label = "خواص ضربه (J/m)"
+        impact_disabled = False
+        if impact_test_type == 'Charpy':
+            impact_label = "خواص ضربه (J/m) - Charpy"
+        elif impact_test_type == 'Izod':
+            impact_label = "خواص ضربه (J/m) - Izod"
+        
+        impact_value = st.number_input(impact_label, min_value=0.0, disabled=impact_disabled, key="impact_value_form")
         tensile_value = st.number_input("استحکام کششی (MPa)", min_value=0.0, key="tensile_value_form")
         
         submit_button = st.button(label='💾 ثبت اطلاعات', key="submit_btn")
@@ -294,27 +305,30 @@ with col_predict:
         st.markdown("### مشخصات فرمولاسیون برای پیش‌بینی")
 
         st.markdown("**پلیمرها**")
-        p1_type_p = st.selectbox("نوع پلیمر اول", options=[''] + unique_values['Polymer1_Type'], key="p1_type_p")
+        # FIX 1: Use combined list for options
+        p1_type_p = st.selectbox("نوع پلیمر اول", options=[''] + unique_values['all_polymers'], key="p1_type_p")
         p1_perc_p = st.number_input("درصد پلیمر اول (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p1_perc_p")
-        p2_type_p = st.selectbox("نوع پلیمر دوم", options=[''] + unique_values['Polymer2_Type'], key="p2_type_p")
+        p2_type_p = st.selectbox("نوع پلیمر دوم", options=[''] + unique_values['all_polymers'], key="p2_type_p")
         p2_perc_p = st.number_input("درصد پلیمر دوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p2_perc_p")
-        p3_type_p = st.selectbox("نوع پلیمر سوم", options=[''] + unique_values['Polymer3_Type'], key="p3_type_p")
+        p3_type_p = st.selectbox("نوع پلیمر سوم", options=[''] + unique_values['all_polymers'], key="p3_type_p")
         p3_perc_p = st.number_input("درصد پلیمر سوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="p3_perc_p")
         
         st.markdown("---")
 
         st.markdown("**فیلرها**")
-        f1_type_p = st.selectbox("نوع فیلر اول", options=[''] + unique_values['Filler1_Type'], key="f1_type_p")
+        # FIX 1: Use combined list for options
+        f1_type_p = st.selectbox("نوع فیلر اول", options=[''] + unique_values['all_fillers'], key="f1_type_p")
         f1_size_p = st.number_input("اندازه ذرات فیلر اول (میکرون)", min_value=0.0, key="f1_size_p")
         f1_perc_p = st.number_input("درصد فیلر اول (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f1_perc_p")
-        f2_type_p = st.selectbox("نوع فیلر دوم", options=[''] + unique_values['Filler2_Type'], key="f2_type_p")
+        f2_type_p = st.selectbox("نوع فیلر دوم", options=[''] + unique_values['all_fillers'], key="f2_type_p")
         f2_size_p = st.number_input("اندازه ذرات فیلر دوم (میکرون)", min_value=0.0, key="f2_size_p")
         f2_perc_p = st.number_input("درصد فیلر دوم (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="f2_perc_p")
 
         st.markdown("---")
 
         st.markdown("**افزودنی‌ها**")
-        a_type_p = st.selectbox("نوع افزودنی", options=[''] + unique_values['Additive_Type'], key="a_type_p")
+        # FIX 1: Use combined list for options
+        a_type_p = st.selectbox("نوع افزودنی", options=[''] + unique_values['all_additives'], key="a_type_p")
         a_perc_p = st.number_input("درصد افزودنی (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1, key="a_perc_p")
         a_func_p = st.selectbox("عملکرد افزودنی", options=[''] + ['Toughener', 'Impact Modifier', 'Colorant', 'Antioxidant', 'Unknown'], key="a_func_p")
         
