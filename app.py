@@ -44,19 +44,17 @@ st.markdown("""
         transition: all 0.2s ease-in-out;
     }
     
-    /* Responsive FIX: Set text and background color for better visibility */
-    /* Target specific parts of the selectbox to ensure colors are applied */
+    /* Apply styles to input fields, number inputs, and selectboxes */
     .stTextInput input, .stNumberInput input, 
     .stSelectbox > div:first-child > div, 
     .stSelectbox > div:first-child > div > div > span,
-    .stSelectbox > div:first-child > div > div > input,
-    .st-emotion-cache-192l57a { /* Button styling */
+    .stSelectbox > div:first-child > div > div > input {
         color: #4a5568 !important; /* Dark gray font color */
         background-color: #ffffff !important; /* White background */
         border: 1px solid #cbd5e0 !important;
     }
 
-    /* More robust styling for the selectbox itself */
+    /* More robust styling for the selectbox itself and its dropdown */
     div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         color: #4a5568 !important;
@@ -70,11 +68,34 @@ st.markdown("""
         color: #4a5568 !important;
     }
 
-    /* Button on hover */
-    .st-emotion-cache-192l57a:hover {
-        background-color: #e2e8f0 !important;
+    /* --- Button Styling --- */
+    /* Target the button's internal div which contains the text */
+    button[data-testid="stFormSubmitButton"] > div,
+    button[data-testid="stButton"] > div {
+        background-color: #ffffff !important;
+        color: #4a5568 !important;
+        border: 1px solid #cbd5e0 !important;
+        border-radius: 8px !important;
+        padding: 10px 20px !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    
+    /* Style the button element itself */
+    button[data-testid="stFormSubmitButton"],
+    button[data-testid="stButton"] {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e0 !important;
+        border-radius: 8px !important;
     }
 
+    /* Button on hover */
+    button[data-testid="stFormSubmitButton"]:hover,
+    button[data-testid="stButton"]:hover {
+        background-color: #e2e8f0 !important;
+        border-color: #a0aec0 !important;
+    }
+
+    /* Input focus styles */
     .stTextInput>div>div>input:focus, .stSelectbox>div>div:focus, .stNumberInput>div>div>input:focus {
         border-color: #007bff;
         box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
@@ -265,7 +286,7 @@ with col_form:
         impact_label = "خواص ضربه (J/m)"
         impact_disabled = False
         if impact_test_type == 'Charpy':
-            impact_label = "خواص ضربه (J/m^2) - Charpy"
+            impact_label = "خواص ضربه (J/m) - Charpy"
         elif impact_test_type == 'Izod':
             impact_label = "خواص ضربه (J/m) - Izod"
         
@@ -388,4 +409,3 @@ for file in pdf_files:
         )
     except FileNotFoundError:
         st.warning(f"فایل {pdf_file_path} پیدا نشد. لطفاً آن را به پوشه پروژه اضافه کنید.")
-
