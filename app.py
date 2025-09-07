@@ -43,8 +43,9 @@ st.markdown("""
         padding: 10px;
         transition: all 0.2s ease-in-out;
     }
-
+    
     /* Responsive FIX: Set text and background color for better visibility */
+    /* Target specific parts of the selectbox to ensure colors are applied */
     .stTextInput input, .stNumberInput input, 
     .stSelectbox > div:first-child > div, 
     .stSelectbox > div:first-child > div > div > span,
@@ -54,7 +55,21 @@ st.markdown("""
         background-color: #ffffff !important; /* White background */
         border: 1px solid #cbd5e0 !important;
     }
+
+    /* More robust styling for the selectbox itself */
+    div[data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        color: #4a5568 !important;
+    }
     
+    /* Targetting the dropdown list items */
+    div[role="listbox"] {
+        background-color: #ffffff !important;
+    }
+    div[role="listbox"] > div {
+        color: #4a5568 !important;
+    }
+
     /* Button on hover */
     .st-emotion-cache-192l57a:hover {
         background-color: #e2e8f0 !important;
